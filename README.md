@@ -197,3 +197,56 @@ PUT /library/_settings
 
 1. 문서들이 필드들이 가지는 값에 따라 타입을 지정해 줄 필요가 있을 때
 2. 불필요한 색인이 발생하지 않게 하기 위해 필요
+
+---
+# 6강 색인 과정 이해하기
+
+### 색인이란?
+
+- 문서를 분석하고 저장하는 과정
+
+### 색인 과정
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/4f2aec43-2087-4c65-9297-af9eb9a257ee/98c7d651-5e01-438b-8eae-daa9961aff58/Untitled.png)
+
+inverted index → 검색과 연관되어있음
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/4f2aec43-2087-4c65-9297-af9eb9a257ee/cb4a66d6-c8e0-4e24-ada6-52179e0e774f/Untitled.png)
+
+프라이머리 샤드가 1개이기 때문에 색인이 하나의 데이터 노드에서만 일어남
+
+→ 데이터노드가 3대지만 색인에 있어서는 사실상 1개만 이용
+
+### → 클러스터로서의 이점을 전혀 살리지 못하는 상황!
+
+→ 그래서 적절한 수의 샤드 개수를 설정하는 것이 성능에 큰 영향을 미친다!
+
+→ 최대한 많은 노드들이 색인에 참여하고 있는지 그걸 가장 먼저 확인해야 함
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/4f2aec43-2087-4c65-9297-af9eb9a257ee/f21bd3a3-5948-4f30-833b-743423c65609/Untitled.png)
+
+```jsx
+PUT /library/_settings
+
+{
+	"index" : {
+		"number_of_shards" : 3,
+		"number_of_replicas" : 1	
+	}
+}
+```
+
+프라이머리 샤드가 3개이기 때문에 3대의 데이터 노드 모두 색인에 참여
+
+아주 이상적인 상황 !
+
+→ 데이터 노드가 하나 더 추가된다면?
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/4f2aec43-2087-4c65-9297-af9eb9a257ee/dec71a0e-c3a7-4f93-afa2-9c12f65518d2/Untitled.png)
+
+
+샤드의 개수가 고르게 분배되지 않아 용량 불균형이 일어날 수 있습니다.
+
+### 결론
+
+**적절한 샤드 개수를 배치하는 것이 중요!**
