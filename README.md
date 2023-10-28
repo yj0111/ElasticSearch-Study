@@ -207,7 +207,7 @@ PUT /library/_settings
 
 ### 색인 과정
 
-![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/4f2aec43-2087-4c65-9297-af9eb9a257ee/98c7d651-5e01-438b-8eae-daa9961aff58/Untitled.png)
+![image](https://github.com/yj0111/ElasticSearch-Study/assets/118320449/700fd85a-c577-40a6-8556-613286f41f7d)
 
 inverted index → 검색과 연관되어있음
 
@@ -242,7 +242,7 @@ PUT /library/_settings
 
 → 데이터 노드가 하나 더 추가된다면?
 
-![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/4f2aec43-2087-4c65-9297-af9eb9a257ee/dec71a0e-c3a7-4f93-afa2-9c12f65518d2/Untitled.png)
+![image](https://github.com/yj0111/ElasticSearch-Study/assets/118320449/b150fcbe-ba1b-4d36-b3bc-a4331cdd6796)
 
 
 샤드의 개수가 고르게 분배되지 않아 용량 불균형이 일어날 수 있습니다.
@@ -250,3 +250,121 @@ PUT /library/_settings
 ### 결론
 
 **적절한 샤드 개수를 배치하는 것이 중요!**
+
+---
+
+# 7강 검색 과정
+![image](https://github.com/yj0111/ElasticSearch-Study/assets/118320449/8f7027c8-7514-4aab-91e9-c38104e75215)
+
+### inverted index 란?
+
+문자열을 분석한 결과를 저장하고 있는 구조체
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/4f2aec43-2087-4c65-9297-af9eb9a257ee/528e6d81-2f22-4092-9019-9e98b881e59b/Untitled.png)
+
+### 애널라이저(Analyzer)
+
+- 문자열을 분석해서 inverted index 구성을 위한 토큰을 만들어 내는 과정
+![image](https://github.com/yj0111/ElasticSearch-Study/assets/118320449/5725b408-55a1-4fca-a87c-ca512d9a8700)
+
+- Character filter(특수문자 제거)  tokenizer (공백 나누기)  token filter (소문자 만들기)→애널라이저
+- 한글을 검색하는 경우에서 많이 사용
+
+![image](https://github.com/yj0111/ElasticSearch-Study/assets/118320449/dbc69385-2614-41f1-9563-336208af9e08)
+
+                                                                                                                       결과 
+
+- 검색 : linux kernel ⇒ linux, kernel 두개의 토큰 생성
+
+![image](https://github.com/yj0111/ElasticSearch-Study/assets/118320449/9184b2d3-1440-401e-a6d4-f37051b4f4f6)
+
+⇒ analyzer를 적용해서 생성한 토큰을 바탕으로 inverted index을 구성
+
+⇒ 검색어로부터 생성된 토큰들을 inverted index 에서 찾는 과정이 **검색**
+
+### 색인 과정 → 프라이머리 샤드
+
+### 검색요청 → 프라이머리 샤드와 레플리카 샤드 모두 처리 가능
+
+![image](https://github.com/yj0111/ElasticSearch-Study/assets/118320449/a17d8132-013e-4279-9daf-57902ad1e75f)
+
+- number_of_shards : 2
+- number_of_replicas : 1
+
+색인 성능은 충분한데 **검색 성능을 높이고 싶으면 number_of_replicas 를 늘리자** ! 
+
+![image](https://github.com/yj0111/ElasticSearch-Study/assets/118320449/e8835337-f044-4fb2-934c-e20258115a96)
+
+- 검색 성능에 문제가 있다면 클러스터로서의 이점을 살리고 있는지를 먼저 확인해보기
+    - number_of_shards : 2
+    - number_of_replicas : 1
+    - 데이터 노드를 아무리 늘린다해도 검색 성능을 높이는 것이 아니라 레플리카 수를 늘려야함!
+
+### 요약
+
+1. analyzer를 적용해서 생성한 토큰을 바탕으로 inverted index을 구성
+2. 검색어로부터 생성된 토큰들을 inverted index 에서 찾는 과정이 **검색**
+3. 검색요청 → 프라이머리 샤드와 레플리카 샤드 모두 처리 가능
+4. 색인과 검색 모두 적절한 샤드의 수가 성능을 결정하며, 적절한 샤드의 수가 클러스터로서의 이점을 활용하는지 결정
+5. 엘라스틱서치는 클러스터로 구성되기 때문에 모든 노드가 색인과 검색을 처리할 수 있도록 구성하는 것이 중요
+
+---
+
+# 8강 text vs keyword
+
+### 공통점
+
+문자열을 나타내기 위한 타입
+
+### 차이점
+
+- text : 전문검색(Full-text-search)을 위해 토큰이 생성
+- keyword: Exact Matching을 위해 토큰이 생성
+
+**analyze API 를 사용해서 어떤식으로 토큰이 만들어지는지 확인하는 것이 가장 정확**
+
+1. text 검색
+
+
+![image](https://github.com/yj0111/ElasticSearch-Study/assets/118320449/fa984319-ea62-485e-b144-c7eca2354c70)
+
+
+- analyzer : standard → text 검색
+- text : “I am a boy”
+- 결과 : I , am , a , boy 라는 4개의 토큰이 검색
+
+1. keyword 검색
+
+![image](https://github.com/yj0111/ElasticSearch-Study/assets/118320449/630520c7-31b8-4b0f-a0ad-6676f895c387)
+
+
+- analyzer : standard → text 검색
+- text : “I am a boy”
+- 결과 : “I am a boy” 라는 1개의 토큰이 검색
+
+   ⇒ **Exact Matching** 을 위한 것
+![image](https://github.com/yj0111/ElasticSearch-Study/assets/118320449/4c50c72f-7013-4eaa-a823-67ca116542ca)
+
+
+⇒ **토큰이 어떻게 생성되는지 용도가 뭔지 에 따라서 다르게 생성 될 수 있음**
+
+- keyword 타입이 색인 속도가 더 빠릅니다 **→ cpu를 더 적게 사용하기 때문**
+- 문자열 필드가 동적 매핑이 되면 text 가 keyword 타입 두개가 모두 생성
+- 굳이 토크나이징이 필요하지 않는 필드의 경우
+    
+    → 문자열의 특성에 따라서 text랑 keyword를 정적 매핑 해주면 성능 개선에 도움
+    
+
+### text로 정의되면 좋을 만한 필드
+
+- 주소
+- 이름
+- 물품
+- 상세 정보
+
+### keyword로 정의되면 좋을 만한 필드
+
+- 성별
+- 물품 카테고리
+
+⇒ 사용자 중심으로 생각을 해보면 좋을 듯
